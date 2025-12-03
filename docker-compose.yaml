@@ -1,0 +1,37 @@
+version: "3.9"
+
+services:
+  mongo:
+    image: mongo
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+
+  redis:
+    image: redis
+    command: ["redis-server", "--requirepass", "someredispassword"]
+    ports:
+      - "6379:6379"
+
+  backend:
+    build: ./backend
+    ports:
+      - "3001:8706"
+    environment:
+      DATABASE_URI: "mongodb://root:example@mongo:27017/expensy?authSource=admin"
+      REDIS_PASSWORD: "someredispassword"
+      REDIS_HOST: "redis"
+    depends_on:
+      - mongo
+      - redis
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: "http://localhost:3001"
+    depends_on:
+      - backend
