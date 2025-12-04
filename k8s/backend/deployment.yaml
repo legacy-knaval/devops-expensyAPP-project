@@ -16,7 +16,8 @@ spec:
     spec:
       containers:
         - name: backend
-          image: kennyacr1.azurecr.io/backend:v4
+          image: kennyacr1.azurecr.io/backend:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 3001
 

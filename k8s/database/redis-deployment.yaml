@@ -16,6 +16,7 @@ spec:
       containers:
         - name: redis
           image: redis:alpine
+          imagePullPolicy: IfNotPresent
           args: ["--requirepass", "someredispassword"]
           ports:
             - containerPort: 6379

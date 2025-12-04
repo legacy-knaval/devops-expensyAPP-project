@@ -16,7 +16,8 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: kennyacr1.azurecr.io/frontend:v6
+          image: kennyacr1.azurecr.io/frontend:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 3000
           env:
