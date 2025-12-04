@@ -1,0 +1,21 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: expensy-app
+  namespace: argocd
+spec:
+  project: knaval-project
+
+  source:
+    repoURL: 'https://github.com/legacy-knaval/devops-expensyAPP-project.git'
+    targetRevision: main
+    path: k8s
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: knaval
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
