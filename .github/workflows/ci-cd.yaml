@@ -1,4 +1,4 @@
-name: CI - Build & Push Images
+name: CI/CD AKS Deployment
 
 on:
   push:
@@ -15,7 +15,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-
       - name: Checkout repo
         uses: actions/checkout@v3
 
@@ -38,7 +37,6 @@ jobs:
           push: true
           tags: |
             ${{ env.ACR_LOGIN_SERVER }}/backend:latest
-            ${{ env.ACR_LOGIN_SERVER }}/backend:${{ github.sha }}
           platforms: linux/amd64,linux/arm64
 
       - name: Build & Push Frontend Image
@@ -48,6 +46,45 @@ jobs:
           push: true
           tags: |
             ${{ env.ACR_LOGIN_SERVER }}/frontend:latest
-            ${{ env.ACR_LOGIN_SERVER }}/frontend:${{ github.sha }}
           platforms: linux/amd64,linux/arm64
-          
+
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Get AKS Credentials
+        run: |
+          az aks get-credentials \
+            --resource-group rg-aks-project \
+            --name knaval-aks \
+            --overwrite-existing
+
+      - name: Apply Backend / Frontend / DB / Ingress
+        run: |
+          kubectl apply -f k8s/backend/
+          kubectl apply -f k8s/frontend/
+          kubectl apply -f k8s/database/
+          kubectl apply -f k8s/ingress/
+
+      # ------------ OPTIONAL: Monitoring Stack ------------
+      # - name: Apply Monitoring (Optional)
+      #   run: |
+      #     kubectl apply -f k8s/monitoring/
+      # ----------------------------------------------------
+
+      - name: Force restart deployments to pull new images
+        run: |
+          kubectl rollout restart deployment/backend-deployment -n knaval
+          kubectl rollout restart deployment/frontend-deployment -n knaval
+          kubectl rollout status deployment/backend-deployment -n knaval --timeout=90s
+          kubectl rollout status deployment/frontend-deployment -n knaval --timeout=90s
