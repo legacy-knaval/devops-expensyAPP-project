@@ -1,0 +1,20 @@
+grafana:
+  service:
+    type: LoadBalancer
+  adminPassword: "admin123"
+
+  persistence:
+    enabled: true
+    type: pvc
+    existingClaim: grafana-pvc
+    accessModes:
+      - ReadWriteOnce
+    size: 5Gi
+
+alertmanager:
+  enabled: false
+
+prometheus:
+  prometheusSpec:
+    serviceMonitorSelector: {}
+    podMonitorSelector: {}
