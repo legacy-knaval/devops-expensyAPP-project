@@ -1,14 +1,20 @@
-import express from 'express';
-import bodyParser from 'body-parser';
-import expenseRoutes from './routes/expense.route';
-import connectDB from './config/db.config';
-import cors from 'cors';
+import express from "express";
+import cors from "cors";
+
+// IMPORT CORRECTO — SIN LA "s"
+import expenseRoutes from "./routes/expense.route";
 
 const app = express();
-app.use(cors());
-app.use(bodyParser.json());
-app.use('/api', expenseRoutes);
 
-connectDB();
+app.use(cors());
+app.use(express.json());
+
+// mount routes
+app.use("/api", expenseRoutes);
+
+// healthcheck
+app.get("/health", (req, res) => {
+  res.send("Backend OK");
+});
 
 export default app;

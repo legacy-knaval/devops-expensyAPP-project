@@ -108,3 +108,9 @@ venv/
 *.swo
 *.bak
 *.orig
+
+# Terraform
+
+terraform.tfstate
+terraform.tfstate.backup
+.terraform/

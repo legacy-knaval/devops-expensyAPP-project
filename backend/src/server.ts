@@ -1,7 +1,17 @@
-import app from './app';
+// Cargar variables de entorno (solo local)
+if (process.env.NODE_ENV !== "production") {
+  require("dotenv").config();
+}
 
-const port = process.env.PORT || 8706;
+import app from "./app";
+import connectDB from "./config/db.config";
 
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
+const port = process.env.PORT || 3001;
+
+(async () => {
+  await connectDB();
+
+  app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
+  });
+})();
