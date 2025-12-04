@@ -1,5 +1,4 @@
 name: CI/CD AKS Deployment
-
 on:
   push:
     branches: ["main"]
@@ -13,7 +12,6 @@ jobs:
 
   build-and-push:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
@@ -24,8 +22,7 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: ACR Login
-        run: |
-          az acr login --name $ACR_NAME
+        run: az acr login --name $ACR_NAME
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
@@ -35,8 +32,7 @@ jobs:
         with:
           context: ./backend
           push: true
-          tags: |
-            ${{ env.ACR_LOGIN_SERVER }}/backend:latest
+          tags: ${{ env.ACR_LOGIN_SERVER }}/backend:latest
           platforms: linux/amd64,linux/arm64
 
       - name: Build & Push Frontend Image
@@ -44,15 +40,12 @@ jobs:
         with:
           context: ./frontend
           push: true
-          tags: |
-            ${{ env.ACR_LOGIN_SERVER }}/frontend:latest
+          tags: ${{ env.ACR_LOGIN_SERVER }}/frontend:latest
           platforms: linux/amd64,linux/arm64
-
 
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
@@ -63,28 +56,23 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Get AKS Credentials
-        run: |
-          az aks get-credentials \
-            --resource-group rg-aks-project \
-            --name knaval-aks \
-            --overwrite-existing
+        run: az aks get-credentials --resource-group rg-aks-project --name knaval-aks --overwrite-existing
 
-      - name: Apply Backend / Frontend / DB / Ingress
+      - name: Apply Manifests
         run: |
           kubectl apply -f k8s/backend/
           kubectl apply -f k8s/frontend/
           kubectl apply -f k8s/database/
           kubectl apply -f k8s/ingress/
 
-      # ------------ OPTIONAL: Monitoring Stack ------------
-      # - name: Apply Monitoring (Optional)
-      #   run: |
-      #     kubectl apply -f k8s/monitoring/
-      # ----------------------------------------------------
-
       - name: Force restart deployments to pull new images
         run: |
           kubectl rollout restart deployment/backend-deployment -n knaval
           kubectl rollout restart deployment/frontend-deployment -n knaval
+          kubectl rollout restart deployment/mongo -n knaval
+          kubectl rollout restart deployment/redis -n knaval
           kubectl rollout status deployment/backend-deployment -n knaval --timeout=90s
           kubectl rollout status deployment/frontend-deployment -n knaval --timeout=90s
+          kubectl rollout status deployment/mongo -n knaval --timeout=90s
+          kubectl rollout status deployment/redis -n knaval --timeout=90s
+          
